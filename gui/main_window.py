@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QLabel, QMenuBar, QAction
+import pandas as pd
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QLabel, QAction
 from PyQt5.QtCore import Qt
 import logging
 
 class MainWindow(QMainWindow):
-    """Ventana principal mejorada con diseño tipo Excel."""
+    """Ventana principal mejorada con diseño tipo Excel e importación de archivos."""
     
     def __init__(self, user):
         super().__init__()
@@ -29,69 +30,19 @@ class MainWindow(QMainWindow):
         self.label_bienvenida.setAlignment(Qt.AlignCenter)
         layout_principal.addWidget(self.label_bienvenida)
 
-        # ✅ TABLA CENTRAL CON 5 COLUMNAS (ID, Nombre, Precio, Cantidad, Presentación)
+        # ✅ TABLA CENTRAL CON 5 COLUMNAS
         self.tabla = QTableWidget(10, 5)
         self.tabla.setHorizontalHeaderLabels(["ID", "Nombre", "Precio", "Cantidad", "Presentación"])
         layout_principal.addWidget(self.tabla)
 
-        # ✅ ESTILOS CSS
-        table_css = """
-        QTableWidget {
-            background-color: #f9f9f9;
-            gridline-color: #dddddd;
-            border: 1px solid #cccccc;
-        }
-        QTableWidget::item {
-            padding: 10px;
-        }
-        QHeaderView::section {
-            background-color: #0078d4;
-            color: white;
-            font-weight: bold;
-            padding: 4px;
-            border: none;
-        }
-        """
-        button_css = """
-        QPushButton {
-            background-color: #0078d4;
-            color: white;
-            border-radius: 5px;
-            padding: 5px 10px;
-        }
-        QPushButton:hover {
-            background-color: #005bb5;
-        }
-        """
-        menu_css = """
-        QMenuBar {
-            background-color: #ffffff;
-            padding: 4px;
-        }
-        QMenuBar::item {
-            background-color: transparent;
-            padding: 4px 20px;
-        }
-        QMenuBar::item:selected {
-            background-color: #0078d4;
-            color: white;
-        }
-        """
-
-        # ✅ Aplicar estilos CSS dentro de init_ui
-        self.tabla.setStyleSheet(table_css)
+        # ✅ BOTONES DE ACCIÓN
+        layout_botones = QHBoxLayout()
+        self.btn_importar = QPushButton("Importar desde Excel")
         self.btn_agregar = QPushButton("Agregar Producto")
         self.btn_eliminar = QPushButton("Eliminar Producto")
         self.btn_editar = QPushButton("Editar Producto")
 
-        self.btn_agregar.setStyleSheet(button_css)
-        self.btn_eliminar.setStyleSheet(button_css)
-        self.btn_editar.setStyleSheet(button_css)
-
-        self.menu_bar.setStyleSheet(menu_css)
-
-        # ✅ BOTONES DE ACCIÓN
-        layout_botones = QHBoxLayout()
+        layout_botones.addWidget(self.btn_importar)
         layout_botones.addWidget(self.btn_agregar)
         layout_botones.addWidget(self.btn_eliminar)
         layout_botones.addWidget(self.btn_editar)
@@ -99,7 +50,8 @@ class MainWindow(QMainWindow):
 
         central_widget.setLayout(layout_principal)
 
-        # ✅ CONECTAR BOTONES (Por ahora, sin funciones)
+        # ✅ CONECTAR BOTONES
+        self.btn_importar.clicked.connect(self.importar_excel)
         self.btn_agregar.clicked.connect(self.agregar_producto)
         self.btn_eliminar.clicked.connect(self.eliminar_producto)
         self.btn_editar.clicked.connect(self.editar_producto)
@@ -113,15 +65,32 @@ class MainWindow(QMainWindow):
         salir_action.triggered.connect(self.close)
         menu_archivo.addAction(salir_action)
 
-        if self.user["rol"] in ["admin", "gerente"]:
-            gestionar_stock_action = QAction("Gestionar Stock", self)
-            gestionar_stock_action.triggered.connect(self.gestionar_stock)
-            menu_gestion.addAction(gestionar_stock_action)
+    def importar_excel(self):
+        """Permite seleccionar un archivo de Excel y cargar los datos en la tabla."""
+        opciones = QFileDialog.Options()
+        archivo, _ = QFileDialog.getOpenFileName(self, "Seleccionar archivo Excel", "", "Archivos Excel (*.xlsx)", options=opciones)
 
-        if self.user["rol"] in ["cajero", "vendedor"]:
-            generar_ticket_action = QAction("Generar Ticket", self)
-            generar_ticket_action.triggered.connect(self.generar_ticket)
-            menu_gestion.addAction(generar_ticket_action)
+        if archivo:
+            logging.info(f"🔹 Importando archivo: {archivo}")
+            df = pd.read_excel(archivo)  # Leer archivo Excel
+
+            # ✅ Limpiar la tabla antes de cargar nuevos datos
+            self.tabla.setRowCount(0)
+
+            # ✅ Ajustar el número de filas y columnas según el archivo importado
+            self.tabla.setRowCount(len(df))
+            self.tabla.setColumnCount(len(df.columns))
+
+            # ✅ Configurar nombres de columnas según el archivo Excel
+            self.tabla.setHorizontalHeaderLabels(df.columns)
+
+            # ✅ Llenar la tabla con los datos del archivo Excel
+            for fila in range(len(df)):
+                for columna in range(len(df.columns)):
+                    item = QTableWidgetItem(str(df.iloc[fila, columna]))
+                    self.tabla.setItem(fila, columna, item)
+
+            logging.info("✅ Archivo importado exitosamente.")
 
     # ✅ FUNCIONES DE BOTONES (Se implementarán en pasos siguientes)
     def agregar_producto(self):
@@ -132,9 +101,3 @@ class MainWindow(QMainWindow):
 
     def editar_producto(self):
         logging.info("🔹 Editar Producto (Función en desarrollo)")
-
-    def gestionar_stock(self):
-        logging.info("🔹 Gestionar Stock (Función en desarrollo)")
-
-    def generar_ticket(self):
-        logging.info("🔹 Generar Ticket (Función en desarrollo)")
