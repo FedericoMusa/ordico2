@@ -23,30 +23,82 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout_principal = QVBoxLayout()
-        
+
         # ✅ MENSAJE DE BIENVENIDA
         self.label_bienvenida = QLabel(f"Bienvenido {self.user['username']} ({self.user['rol']})")
         self.label_bienvenida.setAlignment(Qt.AlignCenter)
         layout_principal.addWidget(self.label_bienvenida)
 
         # ✅ TABLA CENTRAL CON 5 COLUMNAS (ID, Nombre, Precio, Cantidad, Presentación)
-        self.tabla = QTableWidget(10, 5)  # 10 filas, 5 columnas
+        self.tabla = QTableWidget(10, 5)
         self.tabla.setHorizontalHeaderLabels(["ID", "Nombre", "Precio", "Cantidad", "Presentación"])
         layout_principal.addWidget(self.tabla)
 
-        # ✅ BOTONES DE ACCIÓN
-        layout_botones = QHBoxLayout()
+        # ✅ ESTILOS CSS
+        table_css = """
+        QTableWidget {
+            background-color: #f9f9f9;
+            gridline-color: #dddddd;
+            border: 1px solid #cccccc;
+        }
+        QTableWidget::item {
+            padding: 10px;
+        }
+        QHeaderView::section {
+            background-color: #0078d4;
+            color: white;
+            font-weight: bold;
+            padding: 4px;
+            border: none;
+        }
+        """
+        button_css = """
+        QPushButton {
+            background-color: #0078d4;
+            color: white;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+        QPushButton:hover {
+            background-color: #005bb5;
+        }
+        """
+        menu_css = """
+        QMenuBar {
+            background-color: #ffffff;
+            padding: 4px;
+        }
+        QMenuBar::item {
+            background-color: transparent;
+            padding: 4px 20px;
+        }
+        QMenuBar::item:selected {
+            background-color: #0078d4;
+            color: white;
+        }
+        """
+
+        # ✅ Aplicar estilos CSS dentro de init_ui
+        self.tabla.setStyleSheet(table_css)
         self.btn_agregar = QPushButton("Agregar Producto")
         self.btn_eliminar = QPushButton("Eliminar Producto")
         self.btn_editar = QPushButton("Editar Producto")
+
+        self.btn_agregar.setStyleSheet(button_css)
+        self.btn_eliminar.setStyleSheet(button_css)
+        self.btn_editar.setStyleSheet(button_css)
+
+        self.menu_bar.setStyleSheet(menu_css)
+
+        # ✅ BOTONES DE ACCIÓN
+        layout_botones = QHBoxLayout()
         layout_botones.addWidget(self.btn_agregar)
         layout_botones.addWidget(self.btn_eliminar)
         layout_botones.addWidget(self.btn_editar)
         layout_principal.addLayout(layout_botones)
 
-        # ✅ ESTABLECER EL LAYOUT PRINCIPAL
         central_widget.setLayout(layout_principal)
-        
+
         # ✅ CONECTAR BOTONES (Por ahora, sin funciones)
         self.btn_agregar.clicked.connect(self.agregar_producto)
         self.btn_eliminar.clicked.connect(self.eliminar_producto)
