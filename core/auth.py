@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from core.database import obtener_usuario_por_email, obtener_usuario_por_username, agregar_usuario
+from core.database import obtener_usuario_por_email, obtener_usuario_por_username, agregar_usuario, obtener_cantidad_usuarios  # ✅ Importación correcta
 import logging
 
 # Configurar logging
@@ -37,13 +37,23 @@ def autenticar_usuario(entrada, password):
         logging.warning(f"❌ Usuario no encontrado con: {entrada}")
         return None
 
-def registrar_usuario(username, password, email, dni, rol):
-    """Registra un nuevo usuario con email y DNI."""
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)  # ✅ Encripta la contraseña
+def registrar_usuario(username, password, email, dni, rol="cajero"):
+    """Registra un nuevo usuario con rol seleccionado o por defecto."""
+    cantidad_usuarios = obtener_cantidad_usuarios()
+    logging.info(f"🔍 Cantidad de usuarios en la BD: {cantidad_usuarios}")
+
+    # Si no hay usuarios en la BD, el primero será admin
+    if cantidad_usuarios == 0:
+        rol = "admin"
+
+    print(f"🛠 Registrando usuario {username} con rol: {rol}")
+
+    hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
     if agregar_usuario(username, hashed_password, email, dni, rol):
-        logging.info(f"✅ Usuario registrado correctamente: {username}")
-        return "Usuario registrado exitosamente."
+        logging.info(f"✅ Usuario registrado correctamente: {username} con rol {rol}")
+        return f"Usuario registrado exitosamente como {rol}."
     else:
         logging.warning(f"⚠️ Error: Usuario '{username}', email '{email}' o DNI '{dni}' ya existen.")
         return "El nombre de usuario, el email o el DNI ya existen."
+

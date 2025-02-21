@@ -5,7 +5,7 @@ from utils.config import DB_PATH  # ✅ Usa configuración centralizada
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def conectar():
+def conectar_db():
     """Establece una conexión a la base de datos SQLite."""
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -16,7 +16,7 @@ def conectar():
 
 def inicializar_db():
     """Crea la tabla de usuarios si no existe."""
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
@@ -39,7 +39,7 @@ def inicializar_db():
 
 def agregar_usuario(username, password, email, dni, rol):
     """Agrega un usuario a la base de datos con email y DNI."""  
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
@@ -59,7 +59,7 @@ def agregar_usuario(username, password, email, dni, rol):
 
 def obtener_usuario_por_email(email):
     """Obtiene un usuario por su correo electrónico."""
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
@@ -73,7 +73,7 @@ def obtener_usuario_por_email(email):
 
 def obtener_usuario_por_dni(dni):
     """Obtiene un usuario por su número de DNI."""  # ✅ Ahora está definida correctamente
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
@@ -86,7 +86,7 @@ def obtener_usuario_por_dni(dni):
             conn.close()
 def obtener_usuario_por_username(username):
     """Obtiene un usuario por su nombre de usuario."""  # ✅ Ahora está definida correctamente
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
@@ -99,7 +99,7 @@ def obtener_usuario_por_username(username):
             conn.close()
 def actualizar_password(email, nueva_password):
     """Actualiza la contraseña de un usuario dado su correo electrónico."""
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
@@ -112,10 +112,24 @@ def actualizar_password(email, nueva_password):
             return False
         finally:
             conn.close()
+#funcion para ver cuantos usuarios hay
+def obtener_cantidad_usuarios():
+    conn =sqlite3.connect(DB_PATH)
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM usuarios")
+            cantidad = cursor.fetchone()[0]
+            return cantidad
+        except sqlite3.Error as e:
+            logging.error(f"❌ Error al obtener cantidad de usuarios: {e}")
+            return 0
+        finally:
+            conn.close()
 
 def eliminar_usuario(username):
     """Elimina un usuario de la base de datos."""
-    conn = conectar()
+    conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()

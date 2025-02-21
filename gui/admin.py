@@ -1,6 +1,6 @@
 #Interfaz de Administración de Usuarios#
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton
-from db_manager import conectar_db, eliminar_usuario
+from core.database import conectar_db, eliminar_usuario
 import logging
 
 class AdminUsersDialog(QDialog):

@@ -22,10 +22,15 @@ def main():
 
         if login_dialog.exec_():  # ✅ Si el login es exitoso, obtiene el usuario autenticado
             user_data = login_dialog.get_authenticated_user()  # ✅ Recuperamos el usuario autenticado
-            logging.info(f"✅ Usuario autenticado: {user_data}")
+            
+            if not user_data:
+                logging.error("❌ No se obtuvo información del usuario autenticado. Saliendo del programa.")
+                sys.exit(1)
 
+            logging.info(f"✅ Usuario autenticado: {user_data}")
             logging.info("✅ Inicio de sesión exitoso. Ejecutando la aplicación principal.")
-            main_window = MainWindow(user_data)  # ✅ Ahora pasamos el usuario
+            
+            main_window = MainWindow(user_data)  # ✅ Pasamos el usuario a la ventana principal
             main_window.show()
             sys.exit(app.exec_())  # ✅ Mantiene la aplicación en ejecución
         else:

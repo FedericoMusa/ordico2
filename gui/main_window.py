@@ -1,7 +1,8 @@
 import pandas as pd
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QLabel, QAction
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QLabel, QAction, QMessageBox
 from PyQt5.QtCore import Qt
 import logging
+from gui.admin import AdminUsersDialog  # Ajustar la importación según sea necesario
 
 class MainWindow(QMainWindow):
     """Ventana principal mejorada con diseño tipo Excel e importación de archivos."""
@@ -56,8 +57,12 @@ class MainWindow(QMainWindow):
         self.btn_eliminar.clicked.connect(self.eliminar_producto)
         self.btn_editar.clicked.connect(self.editar_producto)
 
+    def gestionar_stock(self):
+        """Función temporal para gestionar stock."""
+        QMessageBox.information(self, "Gestionar Stock", "Funcionalidad para gestionar stock (En desarrollo)")
+
     def configurar_menu(self):
-        """Configura el menú de la ventana principal."""
+        """Configura el menú de la ventana principal y restringe accesos según el rol."""
         menu_archivo = self.menu_bar.addMenu("Archivo")
         menu_gestion = self.menu_bar.addMenu("Gestión")
 
@@ -65,32 +70,57 @@ class MainWindow(QMainWindow):
         salir_action.triggered.connect(self.close)
         menu_archivo.addAction(salir_action)
 
+        if self.user["rol"] == "admin":
+            gestionar_stock_action = QAction("Gestionar Stock", self)
+            gestionar_stock_action.triggered.connect(self.gestionar_stock)
+            menu_gestion.addAction(gestionar_stock_action)
+
+            admin_usuarios_action = QAction("Administrar Usuarios", self)
+            admin_usuarios_action.triggered.connect(self.abrir_admin_usuarios)
+            menu_gestion.addAction(admin_usuarios_action)
+
+        if self.user["rol"] in ["cajero", "vendedor"]:
+            generar_ticket_action = QAction("Generar Ticket", self)
+            generar_ticket_action.triggered.connect(self.generar_ticket)
+            menu_gestion.addAction(generar_ticket_action)
+
+    def abrir_admin_usuarios(self):
+        """Abre la ventana de administración de usuarios (solo para administradores)."""
+        self.admin_users_dialog = AdminUsersDialog()
+        self.admin_users_dialog.exec_()
+
     def importar_excel(self):
         """Permite seleccionar un archivo de Excel y cargar los datos en la tabla."""
         opciones = QFileDialog.Options()
         archivo, _ = QFileDialog.getOpenFileName(self, "Seleccionar archivo Excel", "", "Archivos Excel (*.xlsx)", options=opciones)
 
         if archivo:
-            logging.info(f"🔹 Importando archivo: {archivo}")
-            df = pd.read_excel(archivo)  # Leer archivo Excel
+            try:
+                logging.info(f"🔹 Importando archivo: {archivo}")
+                df = pd.read_excel(archivo)  # Leer archivo Excel
 
-            # ✅ Limpiar la tabla antes de cargar nuevos datos
-            self.tabla.setRowCount(0)
+                # ✅ Limpiar la tabla antes de cargar nuevos datos
+                self.tabla.setRowCount(0)
 
-            # ✅ Ajustar el número de filas y columnas según el archivo importado
-            self.tabla.setRowCount(len(df))
-            self.tabla.setColumnCount(len(df.columns))
+                # ✅ Ajustar el número de filas y columnas según el archivo importado
+                self.tabla.setRowCount(len(df))
+                self.tabla.setColumnCount(len(df.columns))
 
-            # ✅ Configurar nombres de columnas según el archivo Excel
-            self.tabla.setHorizontalHeaderLabels(df.columns)
+                # ✅ Configurar nombres de columnas según el archivo Excel
+                self.tabla.setHorizontalHeaderLabels(df.columns)
 
-            # ✅ Llenar la tabla con los datos del archivo Excel
-            for fila in range(len(df)):
-                for columna in range(len(df.columns)):
-                    item = QTableWidgetItem(str(df.iloc[fila, columna]))
-                    self.tabla.setItem(fila, columna, item)
+                # ✅ Llenar la tabla con los datos del archivo Excel
+                for fila in range(len(df)):
+                    for columna in range(len(df.columns)):
+                        item = QTableWidgetItem(str(df.iloc[fila, columna]))
+                        self.tabla.setItem(fila, columna, item)
 
-            logging.info("✅ Archivo importado exitosamente.")
+                logging.info("✅ Archivo importado exitosamente.")
+                QMessageBox.information(self, "Éxito", "Archivo importado exitosamente.")
+
+            except Exception as e:
+                logging.error(f"❌ Error al importar el archivo: {e}")
+                QMessageBox.critical(self, "Error", f"No se pudo importar el archivo.\n{e}")
 
     # ✅ FUNCIONES DE BOTONES (Se implementarán en pasos siguientes)
     def agregar_producto(self):
