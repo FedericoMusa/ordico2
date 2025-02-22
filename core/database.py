@@ -97,6 +97,74 @@ def obtener_usuario_por_username(username):
             return None
         finally:
             conn.close()
+
+def obtener_productos():
+    """Obtiene la lista de productos desde la base de datos."""
+    try:
+        conexion = sqlite3.connect(DB_PATH)
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM productos")
+        productos = cursor.fetchall()
+        conexion.close()
+        
+        return productos if productos else []  # Siempre devuelve una lista
+
+    except sqlite3.Error as e:
+        print(f"❌ Error al obtener productos: {e}")
+        return []  # Devuelve lista vacía en caso de error
+def agregar_producto(nombre, precio, cantidad, presentacion):
+    """Agrega un producto a la base de datos."""
+    conn = conectar_db()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO productos (nombre, precio, cantidad, presentacion) VALUES (?, ?, ?, ?)",
+                (nombre, precio, cantidad, presentacion),
+            )
+            conn.commit()
+            logging.info(f"✅ Producto agregado: {nombre}")
+            return True
+        except sqlite3.IntegrityError:
+            logging.warning(f"⚠️ Error: El producto '{nombre}' ya existe.")
+            return False
+        except sqlite3.Error as e:
+            logging.error(f"❌ Error al agregar producto: {e}")
+            return False
+        finally:
+            conn.close()
+
+def actualizar_producto(id_producto, nuevo_precio):
+    """Actualiza el precio de un producto dado su ID."""
+    conn = conectar_db()    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE productos SET precio = ? WHERE id = ?", (nuevo_precio, id_producto))
+            conn.commit()
+            logging.info(f"✅ Precio actualizado para el producto con ID: {id_producto}")
+            return True
+        except sqlite3.Error as e:
+            logging.error(f"❌ Error al actualizar precio para el producto con ID '{id_producto}': {e}")
+            return False
+        finally:
+            conn.close()    
+def eliminar_producto(id_producto):
+    """Elimina un producto dado su ID."""
+    conn = conectar_db()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM productos WHERE id = ?", (id_producto,))
+            conn.commit()
+            logging.info(f"✅ Producto eliminado con ID: {id_producto}")
+            return True
+        except sqlite3.Error as e:
+            logging.error(f"❌ Error al eliminar producto con ID '{id_producto}': {e}")
+            return False
+        finally:
+            conn.close()
+
 def actualizar_password(email, nueva_password):
     """Actualiza la contraseña de un usuario dado su correo electrónico."""
     conn = conectar_db()
@@ -112,7 +180,34 @@ def actualizar_password(email, nueva_password):
             return False
         finally:
             conn.close()
+def actualizar_rol_usuario(username, nuevo_rol):
+    """Actualiza el rol de un usuario dado su nombre de usuario."""
+    conn = conectar_db()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE usuarios SET rol = ? WHERE username = ?", (nuevo_rol, username))
+            conn.commit()
+            logging.info(f"✅ Rol actualizado para el usuario con username: {username}")
+            return True
+        except sqlite3.Error as e:
+            logging.error(f"❌ Error al actualizar rol para '{username}': {e}")
+            return False
+        finally:
+            conn.close()
 #funcion para ver cuantos usuarios hay
+def obtener_usuarios():
+    conn = conectar_db()    
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM usuarios")
+            return cursor.fetchall()
+        except sqlite3.Error as e:
+            logging.error(f"❌ Error al obtener usuarios: {e}")
+            return None
+        finally:
+            conn.close()
 def obtener_cantidad_usuarios():
     conn =sqlite3.connect(DB_PATH)
     if conn:
@@ -127,19 +222,18 @@ def obtener_cantidad_usuarios():
         finally:
             conn.close()
 
-def eliminar_usuario(username):
-    """Elimina un usuario de la base de datos."""
+def eliminar_usuario(id_usuario):
+    """Elimina un usuario de la base de datos según su ID."""
     conn = conectar_db()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM usuarios WHERE username = ?", (username,))
+            cursor.execute("DELETE FROM usuarios WHERE id = ?", (id_usuario,))
             conn.commit()
-            logging.info(f"✅ Usuario eliminado: {username}")
+            logging.info(f"✅ Usuario con ID {id_usuario} eliminado correctamente.")
             return True
         except sqlite3.Error as e:
-            logging.error(f"❌ Error al eliminar usuario '{username}': {e}")
+            logging.error(f"❌ Error al eliminar usuario con ID '{id_usuario}': {e}")
             return False
         finally:
             conn.close()
-

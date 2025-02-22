@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuración de la base de datos
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Obtiene el directorio actual
 DB_PATH = "ordico.db"
 
 # Configuración del correo electrónico
