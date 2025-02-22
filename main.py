@@ -1,6 +1,6 @@
 import sys
 import logging
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QWidget, QMainWindow, QApplication
+from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QWidget, QMainWindow, QApplication, QHBoxLayout
 from gui.login import LoginDialog
 from gui.stock_window import StockWindow  # Nueva ventana para gestión de stock
 from gui.user_management_window import UserManagementWindow  # Nueva ventana para gestión de usuarios
@@ -19,8 +19,8 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         """Configura la interfaz principal según el rol del usuario."""
-        self.setWindowTitle("Sistema POS - Panel Principal")
-        self.setGeometry(100, 100, 600, 400)  # Ajustar tamaño proporcional
+        self.setWindowTitle("Panel de Administración")
+        self.setGeometry(100, 100, 400, 300)  # 🔹 Tamaño más proporcionado
 
         if self.user_data["rol"] == "admin":
             self.show_admin_interface()
@@ -28,30 +28,42 @@ class MainWindow(QMainWindow):
             self.show_cashier_interface()
 
     def show_admin_interface(self):
-        """Muestra la interfaz de administrador con botones para abrir las ventanas."""
+        """Muestra la interfaz de administrador con botones centrados."""
         self.setWindowTitle("Panel de Administración")
-        
-        # Crear un contenedor principal
+
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        
-        # Crear el layout principal
-        self.layout = QVBoxLayout()
-        
-        # Botones para abrir las ventanas
+
+        layout = QVBoxLayout()
+        layout.setSpacing(20)  # 🔹 Espacio entre botones
+        layout.setContentsMargins(40, 40, 40, 40)  # 🔹 Márgenes para centrar los botones
+
+        # 🔹 Crear botones con tamaño fijo
         self.btn_stock = QPushButton("Gestión de Stock")
         self.btn_users = QPushButton("Gestión de Usuarios")
 
-        # Agregar los botones al layout
-        self.layout.addWidget(self.btn_stock)
-        self.layout.addWidget(self.btn_users)
+        self.btn_stock.setFixedSize(200, 40)  # 🔹 Tamaño uniforme
+        self.btn_users.setFixedSize(200, 40)
 
-        # Conectar los botones con sus funciones
+        # 🔹 Crear un layout horizontal para centrar los botones
+        btn_layout_stock = QHBoxLayout()
+        btn_layout_stock.addStretch()
+        btn_layout_stock.addWidget(self.btn_stock)
+        btn_layout_stock.addStretch()
+
+        btn_layout_users = QHBoxLayout()
+        btn_layout_users.addStretch()
+        btn_layout_users.addWidget(self.btn_users)
+        btn_layout_users.addStretch()
+
+        # 🔹 Agregar los layouts de los botones al layout principal
+        layout.addLayout(btn_layout_stock)
+        layout.addLayout(btn_layout_users)
+
         self.btn_stock.clicked.connect(self.abrir_stock_window)
         self.btn_users.clicked.connect(self.abrir_users_window)
 
-        # Aplicar el layout al widget central
-        self.central_widget.setLayout(self.layout)
+        self.central_widget.setLayout(layout)
 
     def abrir_stock_window(self):
         """Abre la ventana de gestión de stock."""
@@ -62,12 +74,6 @@ class MainWindow(QMainWindow):
         """Abre la ventana de gestión de usuarios."""
         self.user_management_window = UserManagementWindow()
         self.user_management_window.show()
-
-    def show_cashier_interface(self):
-        """Muestra la interfaz de cajero solo con acceso a ventas."""
-        self.sales_window = SalesWindow()
-        self.sales_window.show()
-
 
 def main():
     """Punto de entrada de la aplicación."""
