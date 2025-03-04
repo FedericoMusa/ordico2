@@ -53,19 +53,16 @@ def obtener_productos():
         logging.error(f"❌ Error al obtener productos: {e}")
         return []
 
-def agregar_producto(nombre, cantidad, precio):
-    """Agrega un nuevo producto a la base de datos."""
+def agregar_producto(nombre, categoria, cantidad, precio):
+    """Agrega un producto a la base de datos con la nueva columna de categoría."""
     try:
         with conectar_db() as conn:
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO productos (nombre, cantidad, precio) VALUES (?, ?, ?)", 
-                           (nombre, cantidad, precio))
+            cursor.execute("INSERT INTO productos (nombre, categoria, cantidad, precio) VALUES (?, ?, ?, ?)",
+                           (nombre, categoria, cantidad, precio))
             conn.commit()
-            logging.info(f"✅ Producto agregado: {nombre} - Cantidad: {cantidad} - Precio: {precio}")
+            logging.info(f"✅ Producto agregado: {nombre} - Categoría: {categoria} - Cantidad: {cantidad} - Precio: {precio}")
             return True
-    except sqlite3.IntegrityError:
-        logging.warning(f"⚠️ El producto '{nombre}' ya existe en la base de datos.")
-        return False
     except sqlite3.Error as e:
         logging.error(f"❌ Error al agregar producto: {e}")
         return False

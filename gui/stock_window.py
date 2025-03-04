@@ -1,7 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTableWidget, QLineEdit, QTableWidgetItem, QHeaderView, QFileDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton,
+                             QHBoxLayout, QMessageBox, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QFileDialog, QDialog, QFormLayout, QSpinBox, QDoubleSpinBox, QComboBox)
 from core.database import obtener_productos, agregar_producto, actualizar_producto, eliminar_producto, importar_desde_excel
 import logging
-import pandas as pd
 
 class StockWindow(QWidget):
     """Ventana para la gestión del stock de productos."""
@@ -14,47 +15,27 @@ class StockWindow(QWidget):
         """Inicializa la interfaz de gestión de stock."""
         self.setWindowTitle("Gestión de Stock")
         self.setGeometry(200, 200, 800, 500)
-
         layout = QVBoxLayout()
 
-        # 🔹 Título
+        # Título
         self.label = QLabel("Gestión de Stock")
         layout.addWidget(self.label)
 
-        # 🔹 Campo de búsqueda
+        # Campo de búsqueda
         self.campo_busqueda = QLineEdit()
         self.campo_busqueda.setPlaceholderText("Buscar producto...")
         layout.addWidget(self.campo_busqueda)
-        self.campo_busqueda.textChanged.connect(self.filtrar_productos)  # 🔍 Filtrar productos en tiempo real
+        self.campo_busqueda.textChanged.connect(self.filtrar_productos)
 
-        # 🔹 Tabla de productos
+        # Tabla de productos
         self.tabla_stock = QTableWidget()
-        self.tabla_stock.setColumnCount(4)
-        self.tabla_stock.setHorizontalHeaderLabels(["ID", "Nombre", "Cantidad", "Precio"])
-        self.tabla_stock.setSortingEnabled(True)  # Habilita la ordenación de columnas
-
-        # 🔹 Ajuste automático de columnas y filas
+        self.tabla_stock.setColumnCount(5)
+        self.tabla_stock.setHorizontalHeaderLabels(["ID", "Nombre", "Categoría", "Cantidad", "Precio"])
+        self.tabla_stock.setSortingEnabled(True)
         self.tabla_stock.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tabla_stock.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         layout.addWidget(self.tabla_stock)
 
-        # 🔹 Estilo tipo Excel
-        self.tabla_stock.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid gray;
-                gridline-color: gray;
-                font-size: 12px;
-            }
-            QHeaderView::section {
-                background-color: #f2f2f2;
-                padding: 4px;
-            }
-            QTableWidget::item {
-                padding: 4px;
-            }
-        """)
-
-        # 🔹 Botones de acciones organizados horizontalmente
+        # Botones de acciones
         botones_layout = QHBoxLayout()
         self.btn_actualizar = QPushButton("Actualizar")
         self.btn_agregar = QPushButton("Agregar")
@@ -69,60 +50,84 @@ class StockWindow(QWidget):
         botones_layout.addWidget(self.btn_importar)
         layout.addLayout(botones_layout)
 
-        # 🔹 Conectar botones a sus funciones
+        # Conectar botones a funciones
         self.btn_actualizar.clicked.connect(self.cargar_stock)
-        self.btn_agregar.clicked.connect(self.agregar_producto)
+        self.btn_agregar.clicked.connect(self.mostrar_dialogo_agregar_producto)
         self.btn_editar.clicked.connect(self.editar_producto)
         self.btn_eliminar.clicked.connect(self.eliminar_producto)
         self.btn_importar.clicked.connect(self.importar_desde_excel)
 
         self.setLayout(layout)
-
-        # 🔹 Cargar datos iniciales
         self.cargar_stock()
 
     def cargar_stock(self):
         """Carga el stock de productos en la tabla."""
-        try:
-            productos = obtener_productos() or []
-            self.tabla_stock.setRowCount(len(productos))
-            for i, producto in enumerate(productos):
-                for j, dato in enumerate(producto):
-                    self.tabla_stock.setItem(i, j, QTableWidgetItem(str(dato)))
-        except Exception as e:
-            logging.error(f"❌ Error al cargar stock: {e}")
-            QMessageBox.critical(self, "Error", f"No se pudo cargar el stock: {e}")
+        self.tabla_stock.setRowCount(0)
+        productos = obtener_productos() or []
+        for producto in productos:
+            fila = self.tabla_stock.rowCount()
+            self.tabla_stock.insertRow(fila)
+            for j, dato in enumerate(producto):
+                self.tabla_stock.setItem(fila, j, QTableWidgetItem(str(dato)))
 
     def filtrar_productos(self):
         """Filtra los productos en la tabla según el texto ingresado."""
         texto = self.campo_busqueda.text().lower()
-        self.cargar_stock()
+        for fila in range(self.tabla_stock.rowCount()):
+            item = self.tabla_stock.item(fila, 1)
+            self.tabla_stock.setRowHidden(fila, texto not in item.text().lower())
 
-    def agregar_producto(self):
-        """Agrega un nuevo producto al stock."""
-        nombre = "Nuevo Producto"
-        cantidad = 10
-        precio = 100.0
+    def mostrar_dialogo_agregar_producto(self):
+        """Muestra un cuadro de diálogo para agregar un nuevo producto."""
+        dialogo = QDialog(self)
+        dialogo.setWindowTitle("Agregar Producto")
+        layout = QFormLayout()
 
-        if agregar_producto(nombre, cantidad, precio):
+        input_nombre = QLineEdit()
+        input_categoria = QComboBox()
+        input_categoria.addItems(["Comestibles", "Productos de limpieza", "Bebidas", "Frutas y verduras", "Golosinas", "Otros"])
+        input_cantidad = QSpinBox()
+        input_cantidad.setMinimum(0)
+        input_precio = QDoubleSpinBox()
+        input_precio.setMinimum(0.01)
+        input_precio.setDecimals(2)
+
+        layout.addRow("Nombre:", input_nombre)
+        layout.addRow("Categoría:", input_categoria)
+        layout.addRow("Cantidad:", input_cantidad)
+        layout.addRow("Precio:", input_precio)
+
+        btn_guardar = QPushButton("Guardar")
+        btn_guardar.clicked.connect(lambda: self.guardar_producto(dialogo, input_nombre.text(), input_categoria.currentText(), input_cantidad.value(), input_precio.value()))
+        layout.addRow(btn_guardar)
+
+        dialogo.setLayout(layout)
+        dialogo.exec_()
+
+    def guardar_producto(self, dialogo, nombre, categoria, cantidad, precio):
+        """Guarda un nuevo producto en la base de datos."""
+        if not nombre.strip():
+            QMessageBox.warning(self, "Error", "El nombre del producto no puede estar vacío.")
+            return
+        if agregar_producto(nombre, categoria, cantidad, precio):
             QMessageBox.information(self, "Éxito", "Producto agregado correctamente.")
             self.cargar_stock()
+            dialogo.accept()
         else:
             QMessageBox.warning(self, "Error", "No se pudo agregar el producto.")
 
     def editar_producto(self):
-        """Edita el producto seleccionado en la tabla."""
+        """Edita el producto seleccionado."""
         fila = self.tabla_stock.currentRow()
         if fila == -1:
             QMessageBox.warning(self, "Error", "Seleccione un producto para editar.")
             return
-
         id_producto = int(self.tabla_stock.item(fila, 0).text())
         nombre = self.tabla_stock.item(fila, 1).text()
-        cantidad = int(self.tabla_stock.item(fila, 2).text())
-        precio = float(self.tabla_stock.item(fila, 3).text())
-
-        if actualizar_producto(id_producto, nombre, cantidad, precio):
+        categoria = self.tabla_stock.item(fila, 2).text()
+        cantidad = int(self.tabla_stock.item(fila, 3).text())
+        precio = float(self.tabla_stock.item(fila, 4).text())
+        if actualizar_producto(id_producto, nombre, categoria, cantidad, precio):
             QMessageBox.information(self, "Éxito", "Producto actualizado correctamente.")
             self.cargar_stock()
         else:
@@ -134,9 +139,7 @@ class StockWindow(QWidget):
         if fila == -1:
             QMessageBox.warning(self, "Error", "Seleccione un producto para eliminar.")
             return
-
-        id_producto = self.tabla_stock.item(fila, 0).text()
-
+        id_producto = int(self.tabla_stock.item(fila, 0).text())
         if eliminar_producto(id_producto):
             QMessageBox.information(self, "Éxito", "Producto eliminado correctamente.")
             self.cargar_stock()
@@ -146,9 +149,8 @@ class StockWindow(QWidget):
     def importar_desde_excel(self):
         """Importa productos desde un archivo Excel."""
         archivo, _ = QFileDialog.getOpenFileName(self, "Seleccionar archivo", "", "Archivos de Excel (*.xlsx)")
-        if archivo:
-            if importar_desde_excel(archivo):
-                QMessageBox.information(self, "Éxito", "Productos importados correctamente.")
-                self.cargar_stock()
-            else:
-                QMessageBox.warning(self, "Error", "No se pudo importar los productos.")
+        if archivo and importar_desde_excel(archivo):
+            QMessageBox.information(self, "Éxito", "Productos importados correctamente.")
+            self.cargar_stock()
+        else:
+            QMessageBox.warning(self, "Error", "No se pudo importar los productos.")
