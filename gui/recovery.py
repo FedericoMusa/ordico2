@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
-from core.database import obtener_usuario_por_dni, actualizar_password
+from core.usuarios import obtener_usuario_por_dni, actualizar_password
 from utils.helpers import generar_nueva_contrasena
 import logging
 

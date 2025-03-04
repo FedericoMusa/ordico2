@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QMessageBox, QHeaderView
-from core.database import obtener_usuarios, eliminar_usuario, actualizar_rol_usuario
+from core.usuarios import obtener_usuarios, eliminar_usuario, actualizar_rol_usuario
 import logging
 
 class UserManagementWindow(QWidget):
